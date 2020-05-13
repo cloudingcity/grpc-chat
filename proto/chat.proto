@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package chat;
+
+service Chat {
+  rpc Connect (ConnectRequest) returns (ConnectResponse) {}
+}
+
+message ConnectRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message ConnectResponse {
+  string token = 1;
+}
