@@ -42,11 +42,11 @@ type Chat struct {
 	password string
 }
 
-func (c *Chat) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
+func (c *Chat) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	if req.Password != c.password {
 		return nil, errors.New("invalid password")
 	}
-	return &pb.ConnectResponse{
+	return &pb.LoginResponse{
 		Token: token(),
 	}, nil
 }

@@ -33,7 +33,7 @@ func (c *Client) Connect(addr string) {
 	chat := &Chat{
 		client: pb.NewChatClient(conn),
 	}
-	token, err := chat.Connect(c.username, c.password)
+	token, err := chat.Login(c.username, c.password)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -44,12 +44,12 @@ type Chat struct {
 	client pb.ChatClient
 }
 
-func (c *Chat) Connect(username, password string) (string, error) {
-	req := &pb.ConnectRequest{
+func (c *Chat) Login(username, password string) (string, error) {
+	req := &pb.LoginRequest{
 		Username: username,
 		Password: password,
 	}
-	resp, err := c.client.Connect(context.Background(), req)
+	resp, err := c.client.Login(context.Background(), req)
 	if err != nil {
 		return "", err
 	}
