@@ -32,12 +32,12 @@ type Server struct {
 	password string
 }
 
-func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
 	if req.Password != s.password {
 		return nil, errors.New("invalid password")
 	}
 	log.Infof("[%s] is logged in", req.Username)
-	return &pb.LoginResponse{
+	return &pb.ConnectResponse{
 		Token: token(),
 	}, nil
 }

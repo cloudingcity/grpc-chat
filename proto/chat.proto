@@ -3,14 +3,14 @@ syntax = "proto3";
 package chat;
 
 service Chat {
-  rpc Login (LoginRequest) returns (LoginResponse) {}
+  rpc Connect (ConnectRequest) returns (ConnectResponse) {}
 }
 
-message LoginRequest {
+message ConnectRequest {
   string username = 1;
   string password = 2;
 }
 
-message LoginResponse {
+message ConnectResponse {
   string token = 1;
 }

@@ -18,10 +18,10 @@ func Connect(addr string, username, password string) {
 	log.Infof("Password: %s", password)
 	log.Infof("Connect to server: %s", addr)
 
-	chat := &Client{
+	c := &Client{
 		client: pb.NewChatClient(conn),
 	}
-	token, err := chat.Login(username, password)
+	token, err := c.Connect(username, password)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -32,12 +32,12 @@ type Client struct {
 	client pb.ChatClient
 }
 
-func (c *Client) Login(username, password string) (string, error) {
-	req := &pb.LoginRequest{
+func (c *Client) Connect(username, password string) (string, error) {
+	req := &pb.ConnectRequest{
 		Username: username,
 		Password: password,
 	}
-	resp, err := c.client.Login(context.Background(), req)
+	resp, err := c.client.Connect(context.Background(), req)
 	if err != nil {
 		return "", err
 	}
