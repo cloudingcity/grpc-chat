@@ -8,43 +8,31 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Client struct {
-	username string
-	password string
-}
-
-func New(username, password string) *Client {
-	return &Client{
-		username: username,
-		password: password,
-	}
-}
-
-func (c *Client) Connect(addr string) {
-	log.Infof("UserName: %s", c.username)
-	log.Infof("Password: %s", c.password)
-	log.Infof("Connect to server: %s", addr)
+func Connect(addr string, username, password string) {
 	conn, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer conn.Close()
+	log.Infof("UserName: %s", username)
+	log.Infof("Password: %s", password)
+	log.Infof("Connect to server: %s", addr)
 
-	chat := &Chat{
+	chat := &Client{
 		client: pb.NewChatClient(conn),
 	}
-	token, err := chat.Login(c.username, c.password)
+	token, err := chat.Login(username, password)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Infof("Token: %s", token)
 }
 
-type Chat struct {
+type Client struct {
 	client pb.ChatClient
 }
 
-func (c *Chat) Login(username, password string) (string, error) {
+func (c *Client) Login(username, password string) (string, error) {
 	req := &pb.LoginRequest{
 		Username: username,
 		Password: password,

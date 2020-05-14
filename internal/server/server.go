@@ -12,40 +12,31 @@ import (
 	"google.golang.org/grpc"
 )
 
-type Server struct {
-	password string
-}
-
-func New(password string) *Server {
-	return &Server{
-		password: password,
-	}
-}
-
-func (s *Server) Listen(port int) {
-	log.Infof("Password: %s", s.password)
+func Listen(port int, password string) {
 	addr := fmt.Sprintf(":%d", port)
-	log.Infof("Started listening on %s\n", addr)
-
 	lis, err := net.Listen("tcp4", addr)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Infof("Password: %s", password)
+	log.Infof("Started listening on %s\n", addr)
+
 	server := grpc.NewServer()
-	pb.RegisterChatServer(server, &Chat{password: s.password})
+	pb.RegisterChatServer(server, &Server{password: password})
 	if err := server.Serve(lis); err != nil {
 		log.Fatalln(err)
 	}
 }
 
-type Chat struct {
+type Server struct {
 	password string
 }
 
-func (c *Chat) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	if req.Password != c.password {
+func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	if req.Password != s.password {
 		return nil, errors.New("invalid password")
 	}
+	log.Infof("[%s] is logged in", req.Username)
 	return &pb.LoginResponse{
 		Token: token(),
 	}, nil

@@ -9,8 +9,7 @@ var clientCmd = &cobra.Command{
 	Use:   "client",
 	Short: "Run as client",
 	Run: func(cmd *cobra.Command, args []string) {
-		c := client.New(username, password)
-		c.Connect(addr)
+		client.Connect(addr, username, password)
 	},
 }
 

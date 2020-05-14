@@ -9,8 +9,7 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Run as server",
 	Run: func(cmd *cobra.Command, args []string) {
-		s := server.New(password)
-		s.Listen(port)
+		server.Listen(port, password)
 	},
 }
 
