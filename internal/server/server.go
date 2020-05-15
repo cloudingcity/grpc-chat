@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"net"
@@ -10,6 +9,7 @@ import (
 	pb "github.com/cloudingcity/grpc-chat/proto"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func Listen(port int, password string) {
@@ -22,7 +22,7 @@ func Listen(port int, password string) {
 	log.Infof("Started listening on %s\n", addr)
 
 	server := grpc.NewServer()
-	pb.RegisterChatServer(server, &Server{password: password})
+	pb.RegisterChatServer(server, newServer(password))
 	if err := server.Serve(lis); err != nil {
 		log.Fatalln(err)
 	}
@@ -30,6 +30,14 @@ func Listen(port int, password string) {
 
 type Server struct {
 	password string
+	manager  *UserManager
+}
+
+func newServer(password string) *Server {
+	return &Server{
+		password: password,
+		manager:  NewUserManager(),
+	}
 }
 
 func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
@@ -37,13 +45,55 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 		return nil, errors.New("invalid password")
 	}
 	log.Infof("[%s] is logged in", req.Username)
+
+	tkn := genToken()
+	s.manager.Register(tkn, req.Username)
+
 	return &pb.ConnectResponse{
-		Token: token(),
+		Token: string(tkn),
 	}, nil
 }
 
-func token() string {
-	b := make([]byte, 4)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)
+func (s *Server) Stream(stream pb.Chat_StreamServer) error {
+	tkn, err := s.getToken(stream)
+	if err != nil {
+		return err
+	}
+	user, err := s.manager.Get(tkn)
+	if err != nil {
+		return err
+	}
+	user.Stream = stream
+
+	go func() {
+		for {
+			req, err := stream.Recv()
+			if err != nil {
+				close(user.Done)
+				return
+			}
+			resp := &pb.StreamResponse{
+				Username: req.Username,
+				Message:  req.Message,
+			}
+			s.manager.Broadcast(resp)
+		}
+	}()
+
+	select {
+	case <-stream.Context().Done():
+	case <-user.Done:
+		s.manager.Remove(tkn)
+		log.Infof("[%s] is logged out", user.Name)
+	}
+	return nil
+}
+
+func (s *Server) getToken(stream pb.Chat_StreamServer) (token, error) {
+	md, _ := metadata.FromIncomingContext(stream.Context())
+	tkn, ok := md["token"]
+	if !ok {
+		return "", errors.New("token not found")
+	}
+	return token(tkn[0]), nil
 }

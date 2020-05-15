@@ -1,11 +1,16 @@
 package client
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"os"
 
 	pb "github.com/cloudingcity/grpc-chat/proto"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func Connect(addr string, username, password string) {
@@ -19,17 +24,19 @@ func Connect(addr string, username, password string) {
 	log.Infof("Connect to server: %s", addr)
 
 	c := &Client{
-		client: pb.NewChatClient(conn),
+		grpcClient: pb.NewChatClient(conn),
 	}
-	token, err := c.Connect(username, password)
+	tkn, err := c.Connect(username, password)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Infof("Token: %s", token)
+	if err := c.Stream(tkn, username); err != nil {
+		log.Fatalln(err)
+	}
 }
 
 type Client struct {
-	client pb.ChatClient
+	grpcClient pb.ChatClient
 }
 
 func (c *Client) Connect(username, password string) (string, error) {
@@ -37,9 +44,49 @@ func (c *Client) Connect(username, password string) (string, error) {
 		Username: username,
 		Password: password,
 	}
-	resp, err := c.client.Connect(context.Background(), req)
+	resp, err := c.grpcClient.Connect(context.Background(), req)
 	if err != nil {
 		return "", err
 	}
 	return resp.Token, nil
+}
+
+func (c *Client) Stream(token string, username string) error {
+	md := metadata.New(map[string]string{"token": token})
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+	stream, err := c.grpcClient.Stream(ctx)
+	if err != nil {
+		return err
+	}
+
+	var g errgroup.Group
+
+	// Send message
+	g.Go(func() error {
+		defer stream.CloseSend()
+		sc := bufio.NewScanner(os.Stdin)
+		for sc.Scan() {
+			resp := &pb.StreamRequest{
+				Token:    token,
+				Username: username,
+				Message:  sc.Text(),
+			}
+			if err := stream.Send(resp); err != nil {
+				return err
+			}
+		}
+		return sc.Err()
+	})
+
+	// Receive broadcast
+	g.Go(func() error {
+		for {
+			resp, err := stream.Recv()
+			if err != nil {
+				return err
+			}
+			fmt.Printf("[%s]: %s\n", resp.Username, resp.Message)
+		}
+	})
+	return g.Wait()
 }

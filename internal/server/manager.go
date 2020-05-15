@@ -54,3 +54,18 @@ func (m *UserManager) Remove(tkn token) {
 	delete(m.users, tkn)
 	m.mux.Unlock()
 }
+
+func (m *UserManager) Broadcast(resp *pb.StreamResponse) {
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	for _, user := range m.users {
+		if user.Stream == nil {
+			continue
+		}
+		if err := user.Stream.Send(resp); err != nil {
+			close(user.Done)
+			continue
+		}
+	}
+}

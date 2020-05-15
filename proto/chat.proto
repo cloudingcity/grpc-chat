@@ -4,6 +4,7 @@ package chat;
 
 service Chat {
   rpc Connect (ConnectRequest) returns (ConnectResponse) {}
+  rpc Stream(stream StreamRequest) returns (stream StreamResponse) {}
 }
 
 message ConnectRequest {
@@ -14,3 +15,16 @@ message ConnectRequest {
 message ConnectResponse {
   string token = 1;
 }
+
+message StreamRequest {
+  string token = 1;
+  string username = 2;
+  string message = 3;
+
+}
+
+message StreamResponse {
+  string username = 1;
+  string message = 2;
+}
+
