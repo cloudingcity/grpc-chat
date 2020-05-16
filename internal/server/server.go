@@ -69,7 +69,7 @@ func (s *Server) Stream(stream pb.Chat_StreamServer) error {
 		for {
 			req, err := stream.Recv()
 			if err != nil {
-				close(user.Done)
+				s.manager.Deregister(tkn)
 				return
 			}
 			resp := &pb.StreamResponse{
@@ -83,7 +83,6 @@ func (s *Server) Stream(stream pb.Chat_StreamServer) error {
 	select {
 	case <-stream.Context().Done():
 	case <-user.Done:
-		s.manager.Deregister(tkn)
 		log.Infof("[%s] is logged out", user.Name)
 	}
 	return nil

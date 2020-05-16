@@ -51,6 +51,7 @@ func (m *UserManager) Get(tkn token) (*User, error) {
 
 func (m *UserManager) Deregister(tkn token) {
 	m.mux.Lock()
+	close(m.users[tkn].Done)
 	delete(m.users, tkn)
 	m.mux.Unlock()
 }
@@ -64,7 +65,7 @@ func (m *UserManager) Broadcast(resp *pb.StreamResponse) {
 			continue
 		}
 		if err := user.Stream.Send(resp); err != nil {
-			close(user.Done)
+			m.Deregister(user.Token)
 			continue
 		}
 	}
