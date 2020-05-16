@@ -49,7 +49,7 @@ func (m *UserManager) Get(tkn token) (*User, error) {
 	return nil, errors.New("token not valid")
 }
 
-func (m *UserManager) Remove(tkn token) {
+func (m *UserManager) Deregister(tkn token) {
 	m.mux.Lock()
 	delete(m.users, tkn)
 	m.mux.Unlock()

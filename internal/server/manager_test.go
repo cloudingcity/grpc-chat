@@ -21,6 +21,6 @@ func TestManager(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Foo", user.Name)
 
-	m.Remove(tkn1)
+	m.Deregister(tkn1)
 	require.Equal(t, 1, len(m.users))
 }

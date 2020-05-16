@@ -83,7 +83,7 @@ func (s *Server) Stream(stream pb.Chat_StreamServer) error {
 	select {
 	case <-stream.Context().Done():
 	case <-user.Done:
-		s.manager.Remove(tkn)
+		s.manager.Deregister(tkn)
 		log.Infof("[%s] is logged out", user.Name)
 	}
 	return nil
