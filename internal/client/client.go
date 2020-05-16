@@ -65,7 +65,10 @@ func (c *Client) Stream(token string, username string) error {
 	g.Go(func() error {
 		defer stream.CloseSend()
 		sc := bufio.NewScanner(os.Stdin)
-		for sc.Scan() {
+		for {
+			if !sc.Scan() {
+				return sc.Err()
+			}
 			resp := &pb.StreamRequest{
 				Token:    token,
 				Username: username,
@@ -75,12 +78,12 @@ func (c *Client) Stream(token string, username string) error {
 				return err
 			}
 		}
-		return sc.Err()
 	})
 
 	// Receive broadcast
 	g.Go(func() error {
 		for {
+			fmt.Print(">> ")
 			resp, err := stream.Recv()
 			if err != nil {
 				return err
