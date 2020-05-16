@@ -91,7 +91,7 @@ func (s *Server) Stream(stream pb.Chat_StreamServer) error {
 
 func (s *Server) getToken(stream pb.Chat_StreamServer) (token, error) {
 	md, _ := metadata.FromIncomingContext(stream.Context())
-	tkn, ok := md["token"]
+	tkn, ok := md["x-token"]
 	if !ok {
 		return "", errors.New("token not found")
 	}

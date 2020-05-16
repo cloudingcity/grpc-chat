@@ -52,7 +52,7 @@ func (c *Client) Connect(username, password string) (string, error) {
 }
 
 func (c *Client) Stream(token string, username string) error {
-	md := metadata.New(map[string]string{"token": token})
+	md := metadata.Pairs("x-token", token)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 	stream, err := c.grpcClient.Stream(ctx)
 	if err != nil {
