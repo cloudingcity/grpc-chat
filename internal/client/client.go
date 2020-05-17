@@ -83,7 +83,6 @@ func (c *Client) Stream(token string, username string) error {
 	// Receive broadcast
 	g.Go(func() error {
 		for {
-			fmt.Print(">> ")
 			resp, err := stream.Recv()
 			if err != nil {
 				return err
