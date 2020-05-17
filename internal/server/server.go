@@ -18,7 +18,6 @@ func Listen(port int, password string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Infof("Password: %s", password)
 	log.Infof("Started listening on %s\n", addr)
 
 	server := grpc.NewServer()

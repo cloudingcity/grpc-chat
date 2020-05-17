@@ -19,8 +19,6 @@ func Connect(addr string, username, password string) {
 		log.Fatalln(err)
 	}
 	defer conn.Close()
-	log.Infof("UserName: %s", username)
-	log.Infof("Password: %s", password)
 	log.Infof("Connect to server: %s", addr)
 
 	c := &Client{
