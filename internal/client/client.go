@@ -8,7 +8,6 @@ import (
 
 	pb "github.com/cloudingcity/grpc-chat/proto"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
@@ -56,16 +55,14 @@ func (c *Client) Stream(token string, username string) error {
 	if err != nil {
 		return err
 	}
-
-	var g errgroup.Group
+	defer stream.CloseSend()
 
 	// Send message
-	g.Go(func() error {
-		defer stream.CloseSend()
+	go func() {
 		sc := bufio.NewScanner(os.Stdin)
 		for {
 			if !sc.Scan() {
-				return sc.Err()
+				log.Fatalln(sc.Err())
 			}
 			resp := &pb.StreamRequest{
 				Token:    token,
@@ -73,20 +70,17 @@ func (c *Client) Stream(token string, username string) error {
 				Message:  sc.Text(),
 			}
 			if err := stream.Send(resp); err != nil {
-				return err
+				log.Fatalln(err)
 			}
 		}
-	})
+	}()
 
 	// Receive broadcast
-	g.Go(func() error {
-		for {
-			resp, err := stream.Recv()
-			if err != nil {
-				return err
-			}
-			fmt.Printf("[%s]: %s\n", resp.Username, resp.Message)
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			return err
 		}
-	})
-	return g.Wait()
+		fmt.Printf("[%s]: %s\n", resp.Username, resp.Message)
+	}
 }
