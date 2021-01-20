@@ -64,12 +64,12 @@ func (c *Client) Stream(token string, username string) error {
 			if !sc.Scan() {
 				log.Fatalln(sc.Err())
 			}
-			resp := &pb.StreamRequest{
+			req := &pb.StreamRequest{
 				Token:    token,
 				Username: username,
 				Message:  sc.Text(),
 			}
-			if err := stream.Send(resp); err != nil {
+			if err := stream.Send(req); err != nil {
 				log.Fatalln(err)
 			}
 		}
